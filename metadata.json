@@ -1,0 +1,8 @@
+{
+  "name": "DGU2 IE Daily Control System",
+  "description": "A centralized repository for managing and tracking the development of your Witcher-themed academic or professional coding projects.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

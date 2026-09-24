@@ -56,9 +56,17 @@ import {
   generateLineLearningCurve,
   calculateBalancingLossAnalysis
 } from '../data/learningCurveMatrix';
-import { StyleProgressionModal } from './StyleProgressionModal';
-import { TelemetryImportModal } from './TelemetryImportModal';
-import { WorkingMinutesBalancingModal } from './WorkingMinutesBalancingModal';
+
+const StyleProgressionModal = React.lazy(() =>
+  import('./StyleProgressionModal').then(m => ({ default: m.StyleProgressionModal }))
+);
+const TelemetryImportModal = React.lazy(() =>
+  import('./TelemetryImportModal').then(m => ({ default: m.TelemetryImportModal }))
+);
+const WorkingMinutesBalancingModal = React.lazy(() =>
+  import('./WorkingMinutesBalancingModal').then(m => ({ default: m.WorkingMinutesBalancingModal }))
+);
+
 import { calculate8hShiftWorkingMinutesBalancing } from '../utils/workingMinutesBalancing';
 import { generateTelemetryCSV, downloadTelemetryCSV } from '../utils/telemetryCsv';
 
@@ -3175,38 +3183,50 @@ export const LineData: React.FC<LineDataProps> = ({
         </div>
       </form>
 
-      {/* Full 40-Day Style Progression Chart Modal */}
-      <StyleProgressionModal
-        isOpen={showProgressionModal}
-        onClose={() => setShowProgressionModal(false)}
-        activeSMVWeight={smvWeight}
-        activeStyleNature={lc.styleNature}
-      />
+      {/* Full 40-Day Style Progression Chart Modal - Lazy Loaded */}
+      {showProgressionModal && (
+        <React.Suspense fallback={null}>
+          <StyleProgressionModal
+            isOpen={showProgressionModal}
+            onClose={() => setShowProgressionModal(false)}
+            activeSMVWeight={smvWeight}
+            activeStyleNature={lc.styleNature}
+          />
+        </React.Suspense>
+      )}
 
-      {/* Telemetry Import Modal */}
-      <TelemetryImportModal
-        isOpen={isTelemetryModalOpen}
-        onClose={() => setIsTelemetryModalOpen(false)}
-        onApplyTelemetry={handleApplyImportedTelemetry}
-        lineNo={formData.lineNo}
-        smv={formData.smv}
-        totalMP={metrics.totalPresentMP || 40}
-        workingHours={formData.workingHours || 8}
-      />
+      {/* Telemetry Import Modal - Lazy Loaded */}
+      {isTelemetryModalOpen && (
+        <React.Suspense fallback={null}>
+          <TelemetryImportModal
+            isOpen={isTelemetryModalOpen}
+            onClose={() => setIsTelemetryModalOpen(false)}
+            onApplyTelemetry={handleApplyImportedTelemetry}
+            lineNo={formData.lineNo}
+            smv={formData.smv}
+            totalMP={metrics.totalPresentMP || 40}
+            workingHours={formData.workingHours || 8}
+          />
+        </React.Suspense>
+      )}
 
-      {/* Full 8-Hour Shift Working Minutes Balancing & Reconciliation Modal */}
-      <WorkingMinutesBalancingModal
-        isOpen={is8hBalancingModalOpen}
-        onClose={() => setIs8hBalancingModalOpen(false)}
-        line={formData}
-        lines={lines}
-        onSelectLineNo={onSelectLineNo}
-        onSaveLine={(updated) => {
-          setFormData(updated);
-          if (onSaveLine) onSaveLine(updated);
-        }}
-        profile={profile}
-      />
+      {/* Full 8-Hour Shift Working Minutes Balancing & Reconciliation Modal - Lazy Loaded */}
+      {is8hBalancingModalOpen && (
+        <React.Suspense fallback={null}>
+          <WorkingMinutesBalancingModal
+            isOpen={is8hBalancingModalOpen}
+            onClose={() => setIs8hBalancingModalOpen(false)}
+            line={formData}
+            lines={lines}
+            onSelectLineNo={onSelectLineNo}
+            onSaveLine={(updated) => {
+              setFormData(updated);
+              if (onSaveLine) onSaveLine(updated);
+            }}
+            profile={profile}
+          />
+        </React.Suspense>
+      )}
 
       {/* Add New Line Modal */}
       {isAddLineModalOpen && (

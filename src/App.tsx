@@ -3,32 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
-import { DailyChecklist } from './components/DailyChecklist';
-import { TodoSchedule } from './components/TodoSchedule';
-import { LineData } from './components/LineData';
-import { LeanToolkit } from './components/LeanToolkit';
-import { MonthlySummary } from './components/MonthlySummary';
-import { Reports } from './components/Reports';
-import { IESimulator } from './components/IESimulator';
-import { LineConfigurationTeams } from './components/LineConfigurationTeams';
-import { VisualFloorPlan } from './components/VisualFloorPlan';
-import { FloorPlanLineSetup } from './components/FloorPlanLineSetup';
-import { LineProductionHistoryView } from './components/LineProductionHistoryView';
 import { BottomNav } from './components/BottomNav';
-import { AuthPage } from './components/AuthPage';
-import { SettingsModal } from './components/SettingsModal';
-import { UserModal } from './components/UserModal';
-import { ActiveOperationalTiers } from './components/ActiveOperationalTiers';
-import { NotificationsModal } from './components/NotificationsModal';
-import { DatabaseModal } from './components/DatabaseModal';
-import { PerformanceScorecardModal } from './components/PerformanceScorecardModal';
-import { UserChatHubModal } from './components/UserChatHubModal';
-import { PrivacySecurityModal } from './components/PrivacySecurityModal';
-import { TerminalLockScreen } from './components/TerminalLockScreen';
-import { AndroidPackageModal } from './components/AndroidPackageModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { initAuth, testConnection } from './lib/firebaseAuth';
 import { Sparkles, Bot, MessageSquare } from 'lucide-react';
@@ -57,7 +35,7 @@ import {
   getStoredSavedFactories,
   setStoredSavedFactories
 } from './data/factoryProfiles';
-import { SettingsTab } from './components/SettingsModal';
+import type { SettingsTab } from './components/SettingsModal';
 import {
   ALL_IMPORTED_DEBONAIR_LINES,
   DEBONAIR_SEPTEMBER_21_DATE,
@@ -84,6 +62,41 @@ import {
   calculateStyleWipThreshold
 } from './utils';
 import { playAuditoryAlert } from './utils/audioAlert';
+
+// Code-split secondary tabs for fast initial boot
+const DailyChecklist = lazy(() => import('./components/DailyChecklist').then(m => ({ default: m.DailyChecklist })));
+const TodoSchedule = lazy(() => import('./components/TodoSchedule').then(m => ({ default: m.TodoSchedule })));
+const LineData = lazy(() => import('./components/LineData').then(m => ({ default: m.LineData })));
+const LeanToolkit = lazy(() => import('./components/LeanToolkit').then(m => ({ default: m.LeanToolkit })));
+const MonthlySummary = lazy(() => import('./components/MonthlySummary').then(m => ({ default: m.MonthlySummary })));
+const Reports = lazy(() => import('./components/Reports').then(m => ({ default: m.Reports })));
+const IESimulator = lazy(() => import('./components/IESimulator').then(m => ({ default: m.IESimulator })));
+const FloorPlanLineSetup = lazy(() => import('./components/FloorPlanLineSetup').then(m => ({ default: m.FloorPlanLineSetup })));
+const LineProductionHistoryView = lazy(() => import('./components/LineProductionHistoryView').then(m => ({ default: m.LineProductionHistoryView })));
+const ActiveOperationalTiers = lazy(() => import('./components/ActiveOperationalTiers').then(m => ({ default: m.ActiveOperationalTiers })));
+
+// Code-split modals loaded strictly on-demand
+const AuthPage = lazy(() => import('./components/AuthPage').then(m => ({ default: m.AuthPage })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const UserModal = lazy(() => import('./components/UserModal').then(m => ({ default: m.UserModal })));
+const NotificationsModal = lazy(() => import('./components/NotificationsModal').then(m => ({ default: m.NotificationsModal })));
+const DatabaseModal = lazy(() => import('./components/DatabaseModal').then(m => ({ default: m.DatabaseModal })));
+const PerformanceScorecardModal = lazy(() => import('./components/PerformanceScorecardModal').then(m => ({ default: m.PerformanceScorecardModal })));
+const UserChatHubModal = lazy(() => import('./components/UserChatHubModal').then(m => ({ default: m.UserChatHubModal })));
+const PrivacySecurityModal = lazy(() => import('./components/PrivacySecurityModal').then(m => ({ default: m.PrivacySecurityModal })));
+const TerminalLockScreen = lazy(() => import('./components/TerminalLockScreen').then(m => ({ default: m.TerminalLockScreen })));
+const AndroidPackageModal = lazy(() => import('./components/AndroidPackageModal').then(m => ({ default: m.AndroidPackageModal })));
+
+function TabLoadingSkeleton() {
+  return (
+    <div className="w-full py-20 flex flex-col items-center justify-center gap-3 animate-pulse">
+      <div className="w-11 h-11 rounded-2xl bg-[#176f78]/10 border border-[#176f78]/25 flex items-center justify-center shadow-xs">
+        <div className="w-5 h-5 border-2 border-[#176f78] border-t-transparent rounded-full animate-spin" />
+      </div>
+      <p className="text-xs font-semibold text-[#527078] tracking-wider uppercase">Loading Workspace Module...</p>
+    </div>
+  );
+}
 
 export default function App() {
   const todayStr = getTodayDateStr();
@@ -1293,195 +1306,197 @@ export default function App() {
 
       {/* Main Content Area: Responsive padding with safe-area spacing for mobile bottom navigation */}
       <main className="flex-1 max-w-[1500px] w-full mx-auto px-2.5 sm:px-6 py-4 sm:py-7 pb-24 md:pb-8">
-        {currentTab === 'dashboard' && (
-          <Dashboard
-            lines={lines}
-            todayDate={todayStr}
-            activeDate={activeDate}
-            onSelectDate={handleSelectDate}
-            onInitializeDateLines={handleInitializeDateLines}
-            layout={layout}
-            onNavigate={handleNavigate}
-            onSelectLine={setSelectedLineNo}
-            selectedLineNo={selectedLineNo}
-            onSaveLine={handleSaveLine}
-            onChecklistCompleted={() => handleUpdateChecklistTask(activeDate || todayStr, 0, 'yes')}
-            checklistCompletion={checklistCompletionPct}
-            checklistCounts={{
-              done: todayDone,
-              pending: todayPending,
-              notDone: todayNotDone,
-              total: CHECKLIST_TASK_COUNT
-            }}
-            profile={profile}
-            roleTiers={roleTiers}
-            onOpenUserModal={() => handleOpenUserModal('profile')}
-            onOpenScorecard={() => setIsScorecardOpen(true)}
-            onOpenDatabase={handleOpenDatabase}
-            checklists={checklists}
-            onUpdateChecklistTask={handleUpdateChecklistTask}
-            onBatchUpdateChecklist={handleBatchUpdateChecklist}
-            onSaveMultipleLines={handleSaveMultipleLines}
-            factoryProfile={factoryProfile}
-          />
-        )}
+        <Suspense fallback={<TabLoadingSkeleton />}>
+          {currentTab === 'dashboard' && (
+            <Dashboard
+              lines={lines}
+              todayDate={todayStr}
+              activeDate={activeDate}
+              onSelectDate={handleSelectDate}
+              onInitializeDateLines={handleInitializeDateLines}
+              layout={layout}
+              onNavigate={handleNavigate}
+              onSelectLine={setSelectedLineNo}
+              selectedLineNo={selectedLineNo}
+              onSaveLine={handleSaveLine}
+              onChecklistCompleted={() => handleUpdateChecklistTask(activeDate || todayStr, 0, 'yes')}
+              checklistCompletion={checklistCompletionPct}
+              checklistCounts={{
+                done: todayDone,
+                pending: todayPending,
+                notDone: todayNotDone,
+                total: CHECKLIST_TASK_COUNT
+              }}
+              profile={profile}
+              roleTiers={roleTiers}
+              onOpenUserModal={() => handleOpenUserModal('profile')}
+              onOpenScorecard={() => setIsScorecardOpen(true)}
+              onOpenDatabase={handleOpenDatabase}
+              checklists={checklists}
+              onUpdateChecklistTask={handleUpdateChecklistTask}
+              onBatchUpdateChecklist={handleBatchUpdateChecklist}
+              onSaveMultipleLines={handleSaveMultipleLines}
+              factoryProfile={factoryProfile}
+            />
+          )}
 
-        {(currentTab === 'roles' || currentTab === 'tiers' || currentTab === 'operational-tiers') && (
-          <ActiveOperationalTiers
-            currentTierId={profile.tierId || 'tier_1'}
-            onSelectTier={(tier) => {
-              setProfile(prev => ({
-                ...prev,
-                tierId: tier.id,
-                jobTitle: tier.name
-              }));
-              notifySave();
-            }}
-            profile={profile}
-            roleTiers={roleTiers}
-            onOpenRoleEditor={() => handleOpenUserModal('roles')}
-            onSelectLineFilter={(lineNo) => {
-              setSelectedLineNo(lineNo);
-              setCurrentTab('linedata');
-            }}
-          />
-        )}
+          {(currentTab === 'roles' || currentTab === 'tiers' || currentTab === 'operational-tiers') && (
+            <ActiveOperationalTiers
+              currentTierId={profile.tierId || 'tier_1'}
+              onSelectTier={(tier) => {
+                setProfile(prev => ({
+                  ...prev,
+                  tierId: tier.id,
+                  jobTitle: tier.name
+                }));
+                notifySave();
+              }}
+              profile={profile}
+              roleTiers={roleTiers}
+              onOpenRoleEditor={() => handleOpenUserModal('roles')}
+              onSelectLineFilter={(lineNo) => {
+                setSelectedLineNo(lineNo);
+                setCurrentTab('linedata');
+              }}
+            />
+          )}
 
-        {currentTab === 'checklist' && (
-          <DailyChecklist
-            checklists={checklists}
-            selectedDate={selectedChecklistDate}
-            onSelectDate={setSelectedChecklistDate}
-            onUpdateTaskStatus={handleUpdateChecklistTask}
-            onBatchUpdateChecklist={handleBatchUpdateChecklist}
-            profile={profile}
-            roleTiers={roleTiers}
-            onNavigate={handleNavigate}
-          />
-        )}
+          {currentTab === 'checklist' && (
+            <DailyChecklist
+              checklists={checklists}
+              selectedDate={selectedChecklistDate}
+              onSelectDate={setSelectedChecklistDate}
+              onUpdateTaskStatus={handleUpdateChecklistTask}
+              onBatchUpdateChecklist={handleBatchUpdateChecklist}
+              profile={profile}
+              roleTiers={roleTiers}
+              onNavigate={handleNavigate}
+            />
+          )}
 
-        {currentTab === 'todo-schedule' && (
-          <TodoSchedule
-            todos={todos}
-            schedules={schedules}
-            onUpdateTodos={setTodos}
-            onUpdateSchedules={setSchedules}
-            profile={profile}
-          />
-        )}
+          {currentTab === 'todo-schedule' && (
+            <TodoSchedule
+              todos={todos}
+              schedules={schedules}
+              onUpdateTodos={setTodos}
+              onUpdateSchedules={setSchedules}
+              profile={profile}
+            />
+          )}
 
-        {currentTab === 'linedata' && (
-          <LineData
-            lines={lines}
-            checklists={checklists}
-            selectedLineNo={selectedLineNo}
-            onSelectLineNo={setSelectedLineNo}
-            onSaveLine={handleSaveLine}
-            onAddNewLine={handleAddNewLine}
-            onDeleteLine={handleDeleteLine}
-            onDeleteFloor={handleDeleteFloor}
-            onNavigate={handleNavigate}
-            activeDate={activeDate}
-            onSelectDate={handleSelectDate}
-            profile={profile}
-            roleTiers={roleTiers}
-          />
-        )}
+          {currentTab === 'linedata' && (
+            <LineData
+              lines={lines}
+              checklists={checklists}
+              selectedLineNo={selectedLineNo}
+              onSelectLineNo={setSelectedLineNo}
+              onSaveLine={handleSaveLine}
+              onAddNewLine={handleAddNewLine}
+              onDeleteLine={handleDeleteLine}
+              onDeleteFloor={handleDeleteFloor}
+              onNavigate={handleNavigate}
+              activeDate={activeDate}
+              onSelectDate={handleSelectDate}
+              profile={profile}
+              roleTiers={roleTiers}
+            />
+          )}
 
-        {(currentTab === 'floor-plan' ||
-          currentTab === 'floorplan' ||
-          currentTab === 'visual-floor-plan' ||
-          currentTab === 'line-management' ||
-          currentTab === 'line-configuration' ||
-          currentTab === 'factory') && (
-          <FloorPlanLineSetup
-            lines={lines}
-            onSaveLine={handleSaveLine}
-            onAddNewLine={handleAddNewLine}
-            onDeleteLine={handleDeleteLine}
-            onDeleteFloor={handleDeleteFloor}
-            onReorderLines={handleReorderLines}
-            onNavigate={handleNavigate}
-            activeDate={activeDate}
-            profile={profile}
-            initialSubView={
-              currentTab === 'line-management' || currentTab === 'line-configuration'
-                ? 'line-setup'
-                : currentTab === 'factory'
-                ? 'factory'
-                : floorSetupInitialSubView
-            }
-            initialLineNo={selectedLineNo}
-            onOpenDatabase={handleOpenDatabase}
-            factoryProfile={factoryProfile}
-            onUpdateFactoryProfile={handleUpdateFactoryProfile}
-            savedFactories={savedFactories}
-            onSaveFactoryList={handleSaveFactoryList}
-          />
-        )}
+          {(currentTab === 'floor-plan' ||
+            currentTab === 'floorplan' ||
+            currentTab === 'visual-floor-plan' ||
+            currentTab === 'line-management' ||
+            currentTab === 'line-configuration' ||
+            currentTab === 'factory') && (
+            <FloorPlanLineSetup
+              lines={lines}
+              onSaveLine={handleSaveLine}
+              onAddNewLine={handleAddNewLine}
+              onDeleteLine={handleDeleteLine}
+              onDeleteFloor={handleDeleteFloor}
+              onReorderLines={handleReorderLines}
+              onNavigate={handleNavigate}
+              activeDate={activeDate}
+              profile={profile}
+              initialSubView={
+                currentTab === 'line-management' || currentTab === 'line-configuration'
+                  ? 'line-setup'
+                  : currentTab === 'factory'
+                  ? 'factory'
+                  : floorSetupInitialSubView
+              }
+              initialLineNo={selectedLineNo}
+              onOpenDatabase={handleOpenDatabase}
+              factoryProfile={factoryProfile}
+              onUpdateFactoryProfile={handleUpdateFactoryProfile}
+              savedFactories={savedFactories}
+              onSaveFactoryList={handleSaveFactoryList}
+            />
+          )}
 
-        {currentTab === 'simulator' && (
-          <IESimulator
-            lines={lines}
-            selectedLineNo={selectedLineNo}
-            onSelectLineNo={setSelectedLineNo}
-            onApplyToLine={handleApplySimulationToLine}
-            onAddNewLineWithSimulation={handleAddNewLineWithSimulation}
-            onNavigate={handleNavigate}
-            profile={profile}
-          />
-        )}
+          {currentTab === 'simulator' && (
+            <IESimulator
+              lines={lines}
+              selectedLineNo={selectedLineNo}
+              onSelectLineNo={setSelectedLineNo}
+              onApplyToLine={handleApplySimulationToLine}
+              onAddNewLineWithSimulation={handleAddNewLineWithSimulation}
+              onNavigate={handleNavigate}
+              profile={profile}
+            />
+          )}
 
-        {currentTab === 'lean-toolkit' && (
-          <LeanToolkit
-            actions={leanActions}
-            onUpdateActions={setLeanActions}
-            profile={profile}
-            lines={lines}
-            onSaveLine={handleSaveLine}
-            selectedLineNo={selectedLineNo}
-          />
-        )}
+          {currentTab === 'lean-toolkit' && (
+            <LeanToolkit
+              actions={leanActions}
+              onUpdateActions={setLeanActions}
+              profile={profile}
+              lines={lines}
+              onSaveLine={handleSaveLine}
+              selectedLineNo={selectedLineNo}
+            />
+          )}
 
-        {currentTab === 'monthly' && (
-          <MonthlySummary
-            lines={lines}
-            checklists={checklists}
-            selectedDate={selectedChecklistDate}
-            onSelectDate={setSelectedChecklistDate}
-            onNavigate={handleNavigate}
-            profile={profile}
-            onAddTodo={handleAddTodoFromAudit}
-          />
-        )}
+          {currentTab === 'monthly' && (
+            <MonthlySummary
+              lines={lines}
+              checklists={checklists}
+              selectedDate={selectedChecklistDate}
+              onSelectDate={setSelectedChecklistDate}
+              onNavigate={handleNavigate}
+              profile={profile}
+              onAddTodo={handleAddTodoFromAudit}
+            />
+          )}
 
-        {currentTab === 'reports' && (
-          <Reports
-            lines={lines}
-            todayDate={activeDate || todayStr}
-            activeDate={activeDate}
-            onSelectDate={handleSelectDate}
-            activeFloor={activeFloor}
-            onSelectFloor={setActiveFloor}
-            checklists={checklists}
-            profile={profile}
-            onNavigate={handleNavigate}
-            onDeleteFloor={handleDeleteFloor}
-            onImportLines={handleImportLines}
-            onOpenDatabase={handleOpenDatabase}
-          />
-        )}
+          {currentTab === 'reports' && (
+            <Reports
+              lines={lines}
+              todayDate={activeDate || todayStr}
+              activeDate={activeDate}
+              onSelectDate={handleSelectDate}
+              activeFloor={activeFloor}
+              onSelectFloor={setActiveFloor}
+              checklists={checklists}
+              profile={profile}
+              onNavigate={handleNavigate}
+              onDeleteFloor={handleDeleteFloor}
+              onImportLines={handleImportLines}
+              onOpenDatabase={handleOpenDatabase}
+            />
+          )}
 
-        {(currentTab === 'line-history' || currentTab === 'history' || currentTab === 'production-history') && (
-          <LineProductionHistoryView
-            lines={lines}
-            selectedLineNo={selectedLineNo}
-            onSelectLineNo={setSelectedLineNo}
-            onNavigate={handleNavigate}
-            onSelectDate={handleSelectDate}
-            profile={profile}
-          />
-        )}
+          {(currentTab === 'line-history' || currentTab === 'history' || currentTab === 'production-history') && (
+            <LineProductionHistoryView
+              lines={lines}
+              selectedLineNo={selectedLineNo}
+              onSelectLineNo={setSelectedLineNo}
+              onNavigate={handleNavigate}
+              onSelectDate={handleSelectDate}
+              profile={profile}
+            />
+          )}
+        </Suspense>
       </main>
 
       {/* Industrial Engineering Footer */}
@@ -1523,88 +1538,102 @@ export default function App() {
         profile={profile}
       />
 
-      {/* Modals */}
-      <AuthPage
-        isOpen={isAuthPageOpen}
-        currentProfile={profile}
-        roleTiers={roleTiers}
-        onSuccess={(updatedProfile) => {
-          setProfile(updatedProfile);
-          setIsAuthPageOpen(false);
-          notifySave();
-        }}
-        onCancel={() => setIsAuthPageOpen(false)}
-      />
+      {/* Modals - Lazy-loaded on-demand for lightning fast boot */}
+      <Suspense fallback={null}>
+        {isAuthPageOpen && (
+          <AuthPage
+            isOpen={isAuthPageOpen}
+            currentProfile={profile}
+            roleTiers={roleTiers}
+            onSuccess={(updatedProfile) => {
+              setProfile(updatedProfile);
+              setIsAuthPageOpen(false);
+              notifySave();
+            }}
+            onCancel={() => setIsAuthPageOpen(false)}
+          />
+        )}
 
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        initialTab={settingsInitialTab}
-        currentTheme={theme}
-        onSelectTheme={setTheme}
-        layout={layout}
-        onUpdateLayout={setLayout}
-        auditoryAlertsEnabled={auditoryAlertsEnabled}
-        onToggleAuditoryAlerts={setAuditoryAlertsEnabled}
-        onOpenPrivacySecurity={() => setIsPrivacySecurityOpen(true)}
-        factoryProfile={factoryProfile}
-        onUpdateFactoryProfile={handleUpdateFactoryProfile}
-        savedFactories={savedFactories}
-        onSaveFactoryList={handleSaveFactoryList}
-        onNavigate={handleNavigate}
-      />
+        {isSettingsOpen && (
+          <SettingsModal
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            initialTab={settingsInitialTab}
+            currentTheme={theme}
+            onSelectTheme={setTheme}
+            layout={layout}
+            onUpdateLayout={setLayout}
+            auditoryAlertsEnabled={auditoryAlertsEnabled}
+            onToggleAuditoryAlerts={setAuditoryAlertsEnabled}
+            onOpenPrivacySecurity={() => setIsPrivacySecurityOpen(true)}
+            factoryProfile={factoryProfile}
+            onUpdateFactoryProfile={handleUpdateFactoryProfile}
+            savedFactories={savedFactories}
+            onSaveFactoryList={handleSaveFactoryList}
+            onNavigate={handleNavigate}
+          />
+        )}
 
-      <UserModal
-        isOpen={isUserModalOpen}
-        onClose={() => setIsUserModalOpen(false)}
-        profile={profile}
-        onUpdateProfile={setProfile}
-        roleTiers={roleTiers}
-        onUpdateRoleTiers={handleUpdateRoleTiers}
-        initialTab={userModalTab}
-        onLockTerminal={handleLockTerminal}
-        onOpenPrivacySecurity={() => setIsPrivacySecurityOpen(true)}
-        onOpenAuth={() => setIsAuthPageOpen(true)}
-      />
+        {isUserModalOpen && (
+          <UserModal
+            isOpen={isUserModalOpen}
+            onClose={() => setIsUserModalOpen(false)}
+            profile={profile}
+            onUpdateProfile={setProfile}
+            roleTiers={roleTiers}
+            onUpdateRoleTiers={handleUpdateRoleTiers}
+            initialTab={userModalTab}
+            onLockTerminal={handleLockTerminal}
+            onOpenPrivacySecurity={() => setIsPrivacySecurityOpen(true)}
+            onOpenAuth={() => setIsAuthPageOpen(true)}
+          />
+        )}
 
-      <NotificationsModal
-        isOpen={isNotificationsOpen}
-        onClose={() => setIsNotificationsOpen(false)}
-        notifications={notifications}
-        onMarkAsRead={handleMarkNotificationRead}
-        onMarkAllAsRead={handleMarkAllNotificationsRead}
-        onClearAll={handleClearNotifications}
-        onNavigate={(tab, lineNo) => {
-          setIsNotificationsOpen(false);
-          handleNavigate(tab, lineNo);
-        }}
-      />
+        {isNotificationsOpen && (
+          <NotificationsModal
+            isOpen={isNotificationsOpen}
+            onClose={() => setIsNotificationsOpen(false)}
+            notifications={notifications}
+            onMarkAsRead={handleMarkNotificationRead}
+            onMarkAllAsRead={handleMarkAllNotificationsRead}
+            onClearAll={handleClearNotifications}
+            onNavigate={(tab, lineNo) => {
+              setIsNotificationsOpen(false);
+              handleNavigate(tab, lineNo);
+            }}
+          />
+        )}
 
-      <DatabaseModal
-        isOpen={isDatabaseOpen}
-        onClose={() => setIsDatabaseOpen(false)}
-        lines={lines}
-        checklists={checklists}
-        todos={todos}
-        leanActions={leanActions}
-        onRestoreData={handleRestoreBackup}
-        onResetFactoryData={handleResetFactoryDefaults}
-        activeDataset={activeDataset}
-        onLoadDebonairData={() => handleSelectDataset('debonair_sep17')}
-        onImportLines={handleImportLines}
-        activeDate={activeDate || todayStr}
-        initialTab={databaseInitialTab}
-      />
+        {isDatabaseOpen && (
+          <DatabaseModal
+            isOpen={isDatabaseOpen}
+            onClose={() => setIsDatabaseOpen(false)}
+            lines={lines}
+            checklists={checklists}
+            todos={todos}
+            leanActions={leanActions}
+            onRestoreData={handleRestoreBackup}
+            onResetFactoryData={handleResetFactoryDefaults}
+            activeDataset={activeDataset}
+            onLoadDebonairData={() => handleSelectDataset('debonair_sep17')}
+            onImportLines={handleImportLines}
+            activeDate={activeDate || todayStr}
+            initialTab={databaseInitialTab}
+          />
+        )}
 
-      <PerformanceScorecardModal
-        isOpen={isScorecardOpen}
-        onClose={() => setIsScorecardOpen(false)}
-        lines={lines}
-        checklists={checklists}
-        selectedDate={selectedChecklistDate}
-        onSelectDate={setSelectedChecklistDate}
-        onNavigate={handleNavigate}
-      />
+        {isScorecardOpen && (
+          <PerformanceScorecardModal
+            isOpen={isScorecardOpen}
+            onClose={() => setIsScorecardOpen(false)}
+            lines={lines}
+            checklists={checklists}
+            selectedDate={selectedChecklistDate}
+            onSelectDate={setSelectedChecklistDate}
+            onNavigate={handleNavigate}
+          />
+        )}
+      </Suspense>
 
       {/* Floating WhatsApp Communications & AI Hub Trigger Button */}
       <button
@@ -1634,39 +1663,51 @@ export default function App() {
         </div>
       </button>
 
-      {/* Integrated Shop Floor User Chat & Gemini AI Hub Modal */}
-      <UserChatHubModal
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        profile={profile}
-        lines={lines}
-      />
+      {/* Heavy Subsystems - Lazy Loaded on Demand */}
+      <Suspense fallback={null}>
+        {/* Integrated Shop Floor User Chat & Gemini AI Hub Modal */}
+        {isChatOpen && (
+          <UserChatHubModal
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            profile={profile}
+            lines={lines}
+          />
+        )}
 
-      {/* Enterprise Privacy & Security Controls Modal */}
-      <PrivacySecurityModal
-        isOpen={isPrivacySecurityOpen}
-        onClose={() => setIsPrivacySecurityOpen(false)}
-        settings={privacySettings}
-        onUpdateSettings={setPrivacySettings}
-        onLockTerminal={handleLockTerminal}
-        auditTrail={securityAuditTrail}
-        onClearCache={handleClearCache}
-        profile={profile}
-      />
+        {/* Enterprise Privacy & Security Controls Modal */}
+        {isPrivacySecurityOpen && (
+          <PrivacySecurityModal
+            isOpen={isPrivacySecurityOpen}
+            onClose={() => setIsPrivacySecurityOpen(false)}
+            settings={privacySettings}
+            onUpdateSettings={setPrivacySettings}
+            onLockTerminal={handleLockTerminal}
+            auditTrail={securityAuditTrail}
+            onClearCache={handleClearCache}
+            profile={profile}
+            roleTiers={roleTiers}
+          />
+        )}
 
-      {/* Terminal Workstation Lock Screen */}
-      <TerminalLockScreen
-        isLocked={privacySettings.isLocked}
-        onUnlock={handleUnlockTerminal}
-        pinCode={privacySettings.pinCode}
-        profile={profile}
-      />
+        {/* Terminal Workstation Lock Screen */}
+        {privacySettings.isLocked && (
+          <TerminalLockScreen
+            isLocked={privacySettings.isLocked}
+            onUnlock={handleUnlockTerminal}
+            pinCode={privacySettings.pinCode}
+            profile={profile}
+          />
+        )}
 
-      {/* Android Package & Mobile Installation Hub Modal */}
-      <AndroidPackageModal
-        isOpen={isAndroidPackageModalOpen}
-        onClose={() => setIsAndroidPackageModalOpen(false)}
-      />
+        {/* Android Package & Mobile Installation Hub Modal */}
+        {isAndroidPackageModalOpen && (
+          <AndroidPackageModal
+            isOpen={isAndroidPackageModalOpen}
+            onClose={() => setIsAndroidPackageModalOpen(false)}
+          />
+        )}
+      </Suspense>
 
       {/* Real-Time Connectivity Offline Indicator */}
       <OfflineIndicator />

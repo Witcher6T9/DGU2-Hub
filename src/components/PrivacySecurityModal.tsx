@@ -18,9 +18,14 @@ import {
   Trash2,
   CheckCircle2,
   History,
-  Info
+  Info,
+  ShieldCheck,
+  FileSpreadsheet,
+  Fingerprint
 } from 'lucide-react';
-import { PrivacySecuritySettings, SecurityAuditEntry, UserProfile } from '../types';
+import { PrivacySecuritySettings, SecurityAuditEntry, UserProfile, RoleTier } from '../types';
+import { getUserPrivacyClearance } from '../utils/rbac';
+import { ROLE_TIERS } from '../mockData';
 
 interface PrivacySecurityModalProps {
   isOpen: boolean;
@@ -31,6 +36,7 @@ interface PrivacySecurityModalProps {
   auditTrail: SecurityAuditEntry[];
   onClearCache?: () => void;
   profile?: UserProfile;
+  roleTiers?: RoleTier[];
 }
 
 export const PrivacySecurityModal: React.FC<PrivacySecurityModalProps> = ({
@@ -41,8 +47,10 @@ export const PrivacySecurityModal: React.FC<PrivacySecurityModalProps> = ({
   onLockTerminal,
   auditTrail,
   onClearCache,
-  profile
+  profile,
+  roleTiers = ROLE_TIERS
 }) => {
+  const clearance = getUserPrivacyClearance(profile, roleTiers);
   const [activeTab, setActiveTab] = useState<'privacy' | 'access' | 'data' | 'audit'>('privacy');
   const [pinInput, setPinInput] = useState(settings.pinCode || '1234');
   const [isSettingPin, setIsSettingPin] = useState(false);
@@ -167,6 +175,49 @@ export const PrivacySecurityModal: React.FC<PrivacySecurityModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-6 space-y-5 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {/* Active Authorization Role Tier & Security Clearance Strip */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#17343a]/5 to-[#176f78]/10 border border-[#176f78]/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#176f78] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[#17343a] text-xs font-display">
+                    {profile?.name || 'Operator'} &bull; {profile?.jobTitle || 'Industrial Engineer'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-[#176f78] text-white text-[10px] font-bold font-mono">
+                    {clearance.badgeLabel}
+                  </span>
+                </div>
+                <div className="text-[11px] text-[#527078] flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span>Clearance: <strong className="text-[#17343a]">{clearance.clearanceLevel}</strong></span>
+                  <span>&bull;</span>
+                  <span>PII Masking: <strong className="capitalize text-[#17343a]">{clearance.maskingLevel}</strong></span>
+                  <span>&bull;</span>
+                  <span>Financials: <strong className={clearance.canViewFinancials ? 'text-emerald-700' : 'text-slate-500'}>{clearance.canViewFinancials ? 'Visible' : 'Masked'}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap self-end sm:self-center">
+              <span className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 border ${
+                clearance.exportWatermark 
+                  ? 'bg-amber-50 text-amber-800 border-amber-200' 
+                  : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+              }`}>
+                <FileSpreadsheet className="w-3 h-3" />
+                {clearance.exportWatermark ? 'DLP Watermark Enforced' : 'Clean Export'}
+              </span>
+
+              {clearance.twoFactorRequired && (
+                <span className="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-800 border border-indigo-200 text-[10px] font-bold flex items-center gap-1">
+                  <Fingerprint className="w-3 h-3" />
+                  2FA Active
+                </span>
+              )}
+            </div>
+          </div>
           {/* TAB 1: Privacy Mode / Screen Redaction */}
           {activeTab === 'privacy' && (
             <div className="space-y-4">

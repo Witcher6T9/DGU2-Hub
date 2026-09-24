@@ -21,7 +21,19 @@ import {
   Sparkles,
   Sliders,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Eye,
+  EyeOff,
+  KeyRound,
+  FileCheck,
+  History,
+  Timer,
+  Fingerprint,
+  FileSpreadsheet,
+  Globe,
+  Network,
+  ShieldAlert,
+  DownloadCloud
 } from 'lucide-react';
 import { RoleTier } from '../types';
 import { ROLE_TIERS as DEFAULT_ROLE_TIERS } from '../mockData';
@@ -559,6 +571,359 @@ export const RoleManager: React.FC<RoleManagerProps> = ({
                       </label>
                     </div>
                   </div>
+
+                  {/* Dedicated Enterprise Privacy & Security Governance Section */}
+                  <div className="sm:col-span-2 pt-3 border-t border-[#e7e1d5] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-[#17343a] text-teal-300 flex items-center justify-center">
+                          <Shield className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#17343a] block">
+                            Privacy &amp; Security Clearance Matrix
+                          </span>
+                          <span className="text-[10px] text-[#527078]">
+                            Configure data confidentiality, PII masking, audit authorization, and terminal safeguards
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Security Clearance, Masking & Auto-Lock Row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#fbfaf6] p-3 rounded-2xl border border-[#d9d2c2]">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-[#527078] mb-1">
+                          Privacy Clearance Level
+                        </label>
+                        <select
+                          value={draftTier.privacyClearanceLevel || 'Level 2 (Operational Clearance)'}
+                          onChange={e =>
+                            setDraftTier({
+                              ...draftTier,
+                              privacyClearanceLevel: e.target.value as any
+                            })
+                          }
+                          className="w-full px-2.5 py-1.5 rounded-xl border border-[#d9d2c2] text-xs font-bold text-[#17343a] bg-white"
+                        >
+                          <option value="Level 4 (Full Clearance)">Level 4 (Full Clearance • Executive)</option>
+                          <option value="Level 3 (Super-User Clearance)">Level 3 (Super-User Clearance • Wing Mgr)</option>
+                          <option value="Level 2 (Operational Clearance)">Level 2 (Operational Clearance • Incharge)</option>
+                          <option value="Level 1 (Field Clearance)">Level 1 (Field Clearance • Line IE / Guest)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-[#527078] mb-1">
+                          Data Masking Policy
+                        </label>
+                        <select
+                          value={draftTier.dataMaskingLevel || 'partial'}
+                          onChange={e =>
+                            setDraftTier({
+                              ...draftTier,
+                              dataMaskingLevel: e.target.value as any
+                            })
+                          }
+                          className="w-full px-2.5 py-1.5 rounded-xl border border-[#d9d2c2] text-xs font-bold text-[#17343a] bg-white"
+                        >
+                          <option value="none">None (Full Unmasked Operational Data)</option>
+                          <option value="partial">Partial (Mask Commercial Costings &amp; Critical PII)</option>
+                          <option value="strict">Strict (Strict Floor Censorship Mode)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-[#527078] mb-1">
+                          Workstation Auto-Lock
+                        </label>
+                        <select
+                          value={draftTier.sessionTimeoutMinutes || 15}
+                          onChange={e =>
+                            setDraftTier({
+                              ...draftTier,
+                              sessionTimeoutMinutes: parseInt(e.target.value, 10) || 15
+                            })
+                          }
+                          className="w-full px-2.5 py-1.5 rounded-xl border border-[#d9d2c2] text-xs font-bold text-[#17343a] bg-white"
+                        >
+                          <option value={5}>5 Minutes (High Security)</option>
+                          <option value={10}>10 Minutes (Line Terminal)</option>
+                          <option value={15}>15 Minutes (Standard Floor)</option>
+                          <option value={20}>20 Minutes (Manager Desk)</option>
+                          <option value={30}>30 Minutes (Department Executive)</option>
+                          <option value={60}>60 Minutes (Root Administrator)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Data Loss Prevention (DLP) & Export Perimeter */}
+                    <div className="p-3 rounded-2xl bg-[#f0f9ff] border border-[#bae6fd] space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#0369a1] flex items-center gap-1.5">
+                          <FileSpreadsheet className="w-3.5 h-3.5" />
+                          Data Loss Prevention (DLP) &amp; Export Policy
+                        </span>
+                        <span className="text-[10px] text-[#0284c7] font-medium">Forensic leak prevention</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                        <label className="flex items-start gap-2 p-2 rounded-xl bg-white/80 hover:bg-white border border-[#e0f2fe] cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={draftTier.exportWatermarkEnabled ?? true}
+                            onChange={e =>
+                              setDraftTier({ ...draftTier, exportWatermarkEnabled: e.target.checked })
+                            }
+                            className="w-4 h-4 rounded text-[#0284c7] focus:ring-[#0284c7] mt-0.5"
+                          />
+                          <div>
+                            <span className="font-bold text-[#0c4a6e] text-xs block">
+                              Forensic Digital Watermarking
+                            </span>
+                            <span className="text-[10px] text-[#0369a1] leading-tight block">
+                              Embeds employee ID, role, time &amp; terminal watermark on all exported PDFs &amp; sheets.
+                            </span>
+                          </div>
+                        </label>
+
+                        <label className="flex items-start gap-2 p-2 rounded-xl bg-white/80 hover:bg-white border border-[#e0f2fe] cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={draftTier.canExportRawData ?? false}
+                            onChange={e =>
+                              setDraftTier({ ...draftTier, canExportRawData: e.target.checked })
+                            }
+                            className="w-4 h-4 rounded text-[#0284c7] focus:ring-[#0284c7] mt-0.5"
+                          />
+                          <div>
+                            <span className="font-bold text-[#0c4a6e] text-xs block">
+                              Export Raw Telemetry Logs
+                            </span>
+                            <span className="text-[10px] text-[#0369a1] leading-tight block">
+                              Permit raw database row exports. When unchecked, only sanitized summary KPIs can be extracted.
+                            </span>
+                          </div>
+                        </label>
+
+                        <div className="p-2 rounded-xl bg-white/80 border border-[#e0f2fe]">
+                          <label className="block text-[10px] font-bold uppercase text-[#0369a1] mb-1">
+                            Batch Export Record Limit
+                          </label>
+                          <select
+                            value={draftTier.maxExportRowsLimit !== undefined ? draftTier.maxExportRowsLimit : 500}
+                            onChange={e =>
+                              setDraftTier({
+                                ...draftTier,
+                                maxExportRowsLimit: parseInt(e.target.value, 10)
+                              })
+                            }
+                            className="w-full px-2 py-1 rounded-lg border border-[#bae6fd] text-xs font-bold text-[#0c4a6e] bg-white"
+                          >
+                            <option value={100}>100 Records / Batch (Strict)</option>
+                            <option value={500}>500 Records / Batch (Standard)</option>
+                            <option value={1000}>1,000 Records / Batch (Elevated)</option>
+                            <option value={5000}>5,000 Records / Batch (Executive)</option>
+                            <option value={0}>Unlimited Records (Root Admin Only)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Network Perimeter & Identity Security */}
+                    <div className="p-3 rounded-2xl bg-[#faf5ff] border border-[#e9d5ff] space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#7e22ce] flex items-center gap-1.5">
+                          <Network className="w-3.5 h-3.5" />
+                          Network Perimeter &amp; Authentication Challenge
+                        </span>
+                        <span className="text-[10px] text-[#9333ea] font-medium">Access boundaries</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-[#7e22ce] mb-1">
+                            Allowed Network Perimeter
+                          </label>
+                          <select
+                            value={draftTier.allowedNetworkScope || 'factory_intranet'}
+                            onChange={e =>
+                              setDraftTier({
+                                ...draftTier,
+                                allowedNetworkScope: e.target.value as any
+                              })
+                            }
+                            className="w-full px-2 py-1.5 rounded-xl border border-[#d8b4fe] text-xs font-bold text-[#581c87] bg-white"
+                          >
+                            <option value="factory_intranet">Factory Shop-Floor Intranet Only (Geofenced)</option>
+                            <option value="vpn_secure">Secured Enterprise VPN / Intranet</option>
+                            <option value="unrestricted">Unrestricted Network Access</option>
+                          </select>
+                        </div>
+
+                        <label className="flex items-start gap-2 p-2 rounded-xl bg-white/80 hover:bg-white border border-[#f3e8ff] cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={draftTier.twoFactorRequired ?? false}
+                            onChange={e =>
+                              setDraftTier({ ...draftTier, twoFactorRequired: e.target.checked })
+                            }
+                            className="w-4 h-4 rounded text-[#9333ea] focus:ring-[#9333ea] mt-0.5"
+                          />
+                          <div>
+                            <span className="font-bold text-[#581c87] text-xs block">
+                              Enforce Multi-Factor (2FA)
+                            </span>
+                            <span className="text-[10px] text-[#7e22ce] leading-tight block">
+                              Mandatory TOTP / biometric verification required to assume or operate this role.
+                            </span>
+                          </div>
+                        </label>
+
+                        <label className="flex items-start gap-2 p-2 rounded-xl bg-white/80 hover:bg-white border border-[#f3e8ff] cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={draftTier.canOverrideLocks ?? false}
+                            onChange={e =>
+                              setDraftTier({ ...draftTier, canOverrideLocks: e.target.checked })
+                            }
+                            className="w-4 h-4 rounded text-[#9333ea] focus:ring-[#9333ea] mt-0.5"
+                          />
+                          <div>
+                            <span className="font-bold text-[#581c87] text-xs block">
+                              Emergency Lockout Override
+                            </span>
+                            <span className="text-[10px] text-[#7e22ce] leading-tight block">
+                              Authority to override shop-floor terminal locks during shift handovers or line alerts.
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Privacy & Security Capability Toggles */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-[#fbfaf6] p-3 rounded-2xl border border-[#d9d2c2]">
+                      <label className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer select-none transition-colors border border-transparent hover:border-[#e7e1d5]">
+                        <input
+                          type="checkbox"
+                          checked={draftTier.canViewPii ?? true}
+                          onChange={e =>
+                            setDraftTier({ ...draftTier, canViewPii: e.target.checked })
+                          }
+                          className="w-4 h-4 rounded text-[#176f78] focus:ring-[#176f78] mt-0.5"
+                        />
+                        <div>
+                          <span className="font-bold text-[#17343a] text-xs flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5 text-[#176f78]" />
+                            View Unmasked Operator PII
+                          </span>
+                          <span className="text-[10px] text-[#527078] block mt-0.5 leading-tight">
+                            Access operator personal phone numbers, NIDs, and emergency contacts. If disabled, contacts are masked.
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer select-none transition-colors border border-transparent hover:border-[#e7e1d5]">
+                        <input
+                          type="checkbox"
+                          checked={draftTier.canViewSensitiveFinancials ?? false}
+                          onChange={e =>
+                            setDraftTier({ ...draftTier, canViewSensitiveFinancials: e.target.checked })
+                          }
+                          className="w-4 h-4 rounded text-[#176f78] focus:ring-[#176f78] mt-0.5"
+                        />
+                        <div>
+                          <span className="font-bold text-[#17343a] text-xs flex items-center gap-1.5">
+                            <Lock className="w-3.5 h-3.5 text-amber-600" />
+                            Commercial Financials &amp; Costing
+                          </span>
+                          <span className="text-[10px] text-[#527078] block mt-0.5 leading-tight">
+                            Access piece rates, SMV dollarization, and margin metrics. If disabled, figures are blurred out.
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer select-none transition-colors border border-transparent hover:border-[#e7e1d5]">
+                        <input
+                          type="checkbox"
+                          checked={draftTier.canManageSecuritySettings ?? false}
+                          onChange={e =>
+                            setDraftTier({ ...draftTier, canManageSecuritySettings: e.target.checked })
+                          }
+                          className="w-4 h-4 rounded text-[#176f78] focus:ring-[#176f78] mt-0.5"
+                        />
+                        <div>
+                          <span className="font-bold text-[#17343a] text-xs flex items-center gap-1.5">
+                            <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
+                            Manage Security Policies &amp; PINs
+                          </span>
+                          <span className="text-[10px] text-[#527078] block mt-0.5 leading-tight">
+                            Configure factory PIN codes, data purge safeguards, and encryption notice parameters.
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer select-none transition-colors border border-transparent hover:border-[#e7e1d5]">
+                        <input
+                          type="checkbox"
+                          checked={draftTier.canViewAuditLogs ?? false}
+                          onChange={e =>
+                            setDraftTier({ ...draftTier, canViewAuditLogs: e.target.checked })
+                          }
+                          className="w-4 h-4 rounded text-[#176f78] focus:ring-[#176f78] mt-0.5"
+                        />
+                        <div>
+                          <span className="font-bold text-[#17343a] text-xs flex items-center gap-1.5">
+                            <History className="w-3.5 h-3.5 text-indigo-600" />
+                            Inspect Security &amp; Access Audit Logs
+                          </span>
+                          <span className="text-[10px] text-[#527078] block mt-0.5 leading-tight">
+                            Access immutable log records of user terminal lockouts, authorization attempts, and changes.
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer select-none transition-colors border border-transparent hover:border-[#e7e1d5]">
+                        <input
+                          type="checkbox"
+                          checked={draftTier.canLockTerminal ?? true}
+                          onChange={e =>
+                            setDraftTier({ ...draftTier, canLockTerminal: e.target.checked })
+                          }
+                          className="w-4 h-4 rounded text-[#176f78] focus:ring-[#176f78] mt-0.5"
+                        />
+                        <div>
+                          <span className="font-bold text-[#17343a] text-xs flex items-center gap-1.5">
+                            <Lock className="w-3.5 h-3.5 text-blue-600" />
+                            Workstation Terminal Lock Authority
+                          </span>
+                          <span className="text-[10px] text-[#527078] block mt-0.5 leading-tight">
+                            Can immediately lock shared shop floor terminals to guard sensitive line data during breaks.
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer select-none transition-colors border border-transparent hover:border-[#e7e1d5]">
+                        <input
+                          type="checkbox"
+                          checked={draftTier.requiresPinConfirmation ?? true}
+                          onChange={e =>
+                            setDraftTier({ ...draftTier, requiresPinConfirmation: e.target.checked })
+                          }
+                          className="w-4 h-4 rounded text-[#176f78] focus:ring-[#176f78] mt-0.5"
+                        />
+                        <div>
+                          <span className="font-bold text-[#17343a] text-xs flex items-center gap-1.5">
+                            <FileCheck className="w-3.5 h-3.5 text-rose-600" />
+                            Enforce PIN on High-Impact Actions
+                          </span>
+                          <span className="text-[10px] text-[#527078] block mt-0.5 leading-tight">
+                            Requires 4-digit PIN confirmation prior to line deletions, reset triggers, or critical sign-offs.
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Form Buttons */}
@@ -678,6 +1043,85 @@ export const RoleManager: React.FC<RoleManagerProps> = ({
                           Export
                         </span>
                       )}
+                    </div>
+
+                    {/* Privacy & Security Governance Tags */}
+                    <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-[#f1eee6] flex-wrap text-[10px]">
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-[#17343a] text-teal-300">
+                        <Shield className="w-3 h-3" />
+                        {tier.privacyClearanceLevel || (tier.level <= 1 ? 'Level 4 Clearance' : tier.level === 2 ? 'Level 3 Clearance' : tier.level === 3 ? 'Level 2 Clearance' : 'Level 1 Clearance')}
+                      </span>
+
+                      <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md font-bold border ${
+                        tier.canViewPii !== false
+                          ? 'bg-blue-50 text-blue-800 border-blue-200'
+                          : 'bg-slate-100 text-slate-700 border-slate-300'
+                      }`}>
+                        {tier.canViewPii !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        {tier.canViewPii !== false ? 'PII: Unmasked' : 'PII: Masked (***)'}
+                      </span>
+
+                      <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md font-bold border ${
+                        tier.canViewSensitiveFinancials
+                          ? 'bg-amber-50 text-amber-800 border-amber-200'
+                          : 'bg-slate-100 text-slate-700 border-slate-300'
+                      }`}>
+                        <Lock className="w-3 h-3" />
+                        {tier.canViewSensitiveFinancials ? 'Financials: Allowed' : 'Financials: Masked'}
+                      </span>
+
+                      {tier.exportWatermarkEnabled && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                          <FileSpreadsheet className="w-3 h-3" />
+                          DLP Watermarked
+                        </span>
+                      )}
+
+                      {tier.canExportRawData ? (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-teal-50 text-teal-800 border border-teal-200">
+                          <DownloadCloud className="w-3 h-3" />
+                          Raw DB Export
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-300">
+                          Aggregate Only
+                        </span>
+                      )}
+
+                      {tier.twoFactorRequired && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                          <Fingerprint className="w-3 h-3" />
+                          2FA Enforced
+                        </span>
+                      )}
+
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
+                        <Network className="w-3 h-3" />
+                        {tier.allowedNetworkScope === 'unrestricted'
+                          ? 'Unrestricted Net'
+                          : tier.allowedNetworkScope === 'vpn_secure'
+                          ? 'VPN / Secure'
+                          : 'Intranet Only'}
+                      </span>
+
+                      {tier.canManageSecuritySettings && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <KeyRound className="w-3 h-3" />
+                          Security Admin
+                        </span>
+                      )}
+
+                      {tier.canOverrideLocks && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                          <ShieldAlert className="w-3 h-3" />
+                          Lock Override
+                        </span>
+                      )}
+
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#f1eee6] text-[#527078] border border-[#d9d2c2]">
+                        <Timer className="w-3 h-3" />
+                        Auto-Lock: {tier.sessionTimeoutMinutes || (tier.level >= 4 ? 10 : tier.level === 3 ? 15 : 30)}m
+                      </span>
                     </div>
                   </div>
                 </div>

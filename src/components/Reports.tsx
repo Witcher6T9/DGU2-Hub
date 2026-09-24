@@ -29,7 +29,11 @@ import {
 } from 'lucide-react';
 import { LineEntry, UserProfile, ChecklistMap } from '../types';
 import { CustomDateSelector } from './CustomDateSelector';
-import { ImportPrintExportModal } from './ImportPrintExportModal';
+
+// Code-split PDF & spreadsheet exporter so jspdf is only fetched when user exports
+const ImportPrintExportModal = React.lazy(() =>
+  import('./ImportPrintExportModal').then(m => ({ default: m.ImportPrintExportModal }))
+);
 import {
   ProductionFloorDropdown,
   matchesProductionFloor,
@@ -1274,20 +1278,24 @@ export const Reports: React.FC<ReportsProps> = ({
         </div>
       )}
 
-      {/* Import / Print / Export Modal Hub */}
-      <ImportPrintExportModal
-        isOpen={isReportModalOpen}
-        onClose={() => setIsReportModalOpen(false)}
-        lines={lines}
-        reportDate={reportDate}
-        onSelectDate={date => {
-          setReportDate(date);
-          if (onSelectDate) onSelectDate(date);
-        }}
-        profile={profile}
-        onImportLines={onImportLines}
-        onOpenDatabase={onOpenDatabase}
-      />
+      {/* Import / Print / Export Modal Hub - Lazy Loaded */}
+      {isReportModalOpen && (
+        <React.Suspense fallback={null}>
+          <ImportPrintExportModal
+            isOpen={isReportModalOpen}
+            onClose={() => setIsReportModalOpen(false)}
+            lines={lines}
+            reportDate={reportDate}
+            onSelectDate={date => {
+              setReportDate(date);
+              if (onSelectDate) onSelectDate(date);
+            }}
+            profile={profile}
+            onImportLines={onImportLines}
+            onOpenDatabase={onOpenDatabase}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 };

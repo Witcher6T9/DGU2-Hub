@@ -511,6 +511,29 @@ export interface RoleTier {
   dataEntryOnly?: boolean;
   canApprove?: boolean;
   isHidden?: boolean;
+
+  // Enterprise Privacy & Security System Elements
+  canViewSensitiveFinancials?: boolean; // Can view commercial line margins, labor cost, piece-rate figures
+  canViewPii?: boolean; // Can view unmasked operator PII (phone, NID, emergency contacts)
+  canManageSecuritySettings?: boolean; // Can configure system PIN, encryption, lock screen policies
+  canViewAuditLogs?: boolean; // Can inspect security audit trail & authentication access logs
+  canLockTerminal?: boolean; // Can trigger instant shop-floor terminal security lockout
+  requiresPinConfirmation?: boolean; // High-impact actions require security PIN re-verification
+  dataMaskingLevel?: 'none' | 'partial' | 'strict'; // 'none' for Executive/Admin, 'partial' for Incharges, 'strict' for Frontline/Guest
+  sessionTimeoutMinutes?: number; // Custom inactivity auto-lock for this role tier (e.g. 5, 10, 15, 30, 60 min)
+  privacyClearanceLevel?: 'Level 4 (Full Clearance)' | 'Level 3 (Super-User Clearance)' | 'Level 2 (Operational Clearance)' | 'Level 1 (Field Clearance)';
+  
+  // Data Loss Prevention (DLP) & Forensic Export Protection
+  exportWatermarkEnabled?: boolean; // Mandates cryptographic forensic watermark with User ID & IP on all reports/exports
+  canExportRawData?: boolean; // Can export un-aggregated raw telemetry & payroll records (false = aggregated summary only)
+  maxExportRowsLimit?: number; // Export batch records quota limit to prevent bulk data leakage (e.g. 100, 500, 1000, 0 = unlimited)
+
+  // Workstation, Identity & Perimeter Security
+  twoFactorRequired?: boolean; // Mandatory 2FA/TOTP biometric/auth challenge for high-privilege access
+  allowedNetworkScope?: 'factory_intranet' | 'vpn_secure' | 'unrestricted'; // Geofenced network policy (e.g. shop floor terminal only)
+  canOverrideLocks?: boolean; // Can override emergency shop-floor terminal lockouts
+  canPurgeAuditLogs?: boolean; // Exclusive permission to clear security and access logs (Root Admin only)
+  ipWhitelistRequired?: boolean; // Restricts logins to whitelisted factory IP subnets
 }
 
 export interface UserProfile {

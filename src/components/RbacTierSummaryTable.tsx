@@ -21,7 +21,18 @@ import {
   Info,
   ArrowRight,
   Filter,
-  Check
+  Check,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Timer,
+  FileCheck,
+  Fingerprint,
+  FileSpreadsheet,
+  DownloadCloud,
+  Network,
+  ShieldAlert,
+  AlertTriangle
 } from 'lucide-react';
 import { RoleTier, UserProfile } from '../types';
 import {
@@ -31,7 +42,22 @@ import {
   FACTORY_BLOCKS,
   checkLineAccess,
   getLineWing,
-  getLineBlock
+  getLineBlock,
+  canUserViewPii,
+  canUserViewFinancials,
+  canUserManageSecurity,
+  canUserViewAuditLogs,
+  getUserDataMasking,
+  maskPii,
+  maskFinancial,
+  getUserPrivacyClearance,
+  canUserExportRawData,
+  getUserExportLimit,
+  isExportWatermarkRequired,
+  isTwoFactorRequired,
+  getUserNetworkScope,
+  canUserOverrideLock,
+  canUserPurgeAudit
 } from '../utils/rbac';
 
 interface RbacTierSummaryTableProps {
@@ -51,10 +77,12 @@ export const RbacTierSummaryTable: React.FC<RbacTierSummaryTableProps> = ({
 }) => {
   const [selectedTestLine, setSelectedTestLine] = useState<string>('Line 04');
   const [showDetailedPermissions, setShowDetailedPermissions] = useState<boolean>(true);
+  const [showSecurityMatrix, setShowSecurityMatrix] = useState<boolean>(true);
   const [expandedTierId, setExpandedTierId] = useState<string | null>(null);
 
   // Active tier object
   const activeTier = roleTiers.find(t => t.id === activeTierId) || roleTiers[0];
+  const activeClearance = getUserPrivacyClearance(profile, roleTiers);
 
   // Test line access for active tier
   const testAccess = checkLineAccess(profile, roleTiers, selectedTestLine);
@@ -146,8 +174,11 @@ export const RbacTierSummaryTable: React.FC<RbacTierSummaryTableProps> = ({
                 <th className="py-3.5 px-6 font-bold tracking-wide w-[30%]">
                   Reporting Scope
                 </th>
-                <th className="py-3.5 px-6 font-bold tracking-wide w-[30%]">
+                <th className="py-3.5 px-6 font-bold tracking-wide w-[24%]">
                   Access Control Level
+                </th>
+                <th className="py-3.5 px-6 font-bold tracking-wide w-[24%]">
+                  Privacy &amp; Security Clearance
                 </th>
               </tr>
             </thead>
@@ -271,6 +302,60 @@ export const RbacTierSummaryTable: React.FC<RbacTierSummaryTableProps> = ({
                           </div>
                         </div>
                       )}
+                    </td>
+
+                    {/* Column 5: Privacy & Security Clearance */}
+                    <td className="py-4 px-6 align-middle">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold text-[10px] bg-[#17343a] text-teal-300">
+                            <Shield className="w-3 h-3" />
+                            {tier.privacyClearanceLevel || (tier.level <= 1 ? 'Level 4 Clearance' : tier.level === 2 ? 'Level 3 Clearance' : tier.level === 3 ? 'Level 2 Clearance' : 'Level 1 Clearance')}
+                          </span>
+
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            tier.canViewPii !== false
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-slate-200 text-slate-700'
+                          }`}>
+                            {tier.canViewPii !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                            {tier.canViewPii !== false ? 'PII Unmasked' : 'PII Masked'}
+                          </span>
+
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            tier.canViewSensitiveFinancials
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-slate-200 text-slate-700'
+                          }`}>
+                            <Lock className="w-3 h-3" />
+                            {tier.canViewSensitiveFinancials ? 'Financials' : 'Cost Masked'}
+                          </span>
+
+                          {tier.exportWatermarkEnabled && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800" title="Digital forensic watermarking enforced on all exports">
+                              <FileSpreadsheet className="w-3 h-3" />
+                              DLP Watermark
+                            </span>
+                          )}
+
+                          {tier.twoFactorRequired && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800" title="Multi-Factor Authentication Required">
+                              <Fingerprint className="w-3 h-3" />
+                              2FA
+                            </span>
+                          )}
+
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200" title={`Perimeter: ${tier.allowedNetworkScope || 'factory_intranet'}`}>
+                            <Network className="w-3 h-3" />
+                            {tier.allowedNetworkScope === 'unrestricted' ? 'Unrestricted' : tier.allowedNetworkScope === 'vpn_secure' ? 'VPN/Intranet' : 'Intranet Only'}
+                          </span>
+
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700">
+                            <Timer className="w-3 h-3" />
+                            {tier.sessionTimeoutMinutes || (tier.level >= 4 ? 10 : tier.level === 3 ? 15 : 30)}m lock
+                          </span>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -403,6 +488,99 @@ export const RbacTierSummaryTable: React.FC<RbacTierSummaryTableProps> = ({
             )}
           </div>
         </div>
+
+        {/* Live Line Privacy, PII & DLP Telemetry Live Simulation */}
+        <div className="pt-3 border-t border-[#f1eee6] space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <Eye className="w-3.5 h-3.5 text-[#1e3a8a]" />
+              {selectedTestLine} Privacy &amp; Data Confidentiality Live Inspection
+            </span>
+            <span className="text-[11px] font-semibold text-slate-500">
+              Simulated under: <strong className="text-[#1e3a8a]">{activeTier?.roleTitle || activeTier?.name}</strong>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {/* 1. Operator PII */}
+            <div className="p-3 rounded-2xl bg-[#f8fafc] border border-slate-200 space-y-1">
+              <span className="text-[10px] font-bold uppercase text-slate-500 flex items-center justify-between">
+                <span>Operator Contact &amp; PII</span>
+                <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold ${canUserViewPii(profile, roleTiers) ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>
+                  {canUserViewPii(profile, roleTiers) ? 'UNMASKED' : 'MASKED'}
+                </span>
+              </span>
+              <div className="font-mono text-xs font-bold text-slate-900 pt-0.5">
+                {maskPii('+880 1712-345678', canUserViewPii(profile, roleTiers))}
+              </div>
+              <span className="text-[10px] text-slate-500 block leading-tight">
+                {canUserViewPii(profile, roleTiers)
+                  ? 'Authorized to inspect operator personal cell & emergency contacts.'
+                  : 'Restricted under Field Privacy Policy; operator contact obscured.'}
+              </span>
+            </div>
+
+            {/* 2. Commercial Financials */}
+            <div className="p-3 rounded-2xl bg-[#f8fafc] border border-slate-200 space-y-1">
+              <span className="text-[10px] font-bold uppercase text-slate-500 flex items-center justify-between">
+                <span>SMV Labor Cost &amp; Margin</span>
+                <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold ${canUserViewFinancials(profile, roleTiers) ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'}`}>
+                  {canUserViewFinancials(profile, roleTiers) ? 'VISIBLE' : 'RESTRICTED'}
+                </span>
+              </span>
+              <div className="font-mono text-xs font-bold text-slate-900 pt-0.5">
+                {maskFinancial('$0.084 / Piece (Standard)', canUserViewFinancials(profile, roleTiers))}
+              </div>
+              <span className="text-[10px] text-slate-500 block leading-tight">
+                {canUserViewFinancials(profile, roleTiers)
+                  ? 'Commercial rate & line labor cost calculation unblurred.'
+                  : 'Costing blurred for shop floor roles to protect trade secrets.'}
+              </span>
+            </div>
+
+            {/* 3. DLP Watermark & Quota */}
+            <div className="p-3 rounded-2xl bg-[#f8fafc] border border-slate-200 space-y-1">
+              <span className="text-[10px] font-bold uppercase text-slate-500 flex items-center justify-between">
+                <span>DLP Forensic Watermark</span>
+                <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold ${isExportWatermarkRequired(profile, roleTiers) ? 'bg-sky-100 text-sky-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                  {isExportWatermarkRequired(profile, roleTiers) ? 'ENFORCED' : 'CLEAN'}
+                </span>
+              </span>
+              <div className="font-sans text-xs font-bold text-slate-900 pt-0.5 flex items-center gap-1">
+                <FileSpreadsheet className="w-3.5 h-3.5 text-[#0369a1]" />
+                <span>Limit: {getUserExportLimit(profile, roleTiers) === 0 ? 'Unlimited' : `${getUserExportLimit(profile, roleTiers)} rows/batch`}</span>
+              </div>
+              <span className="text-[10px] text-slate-500 block leading-tight">
+                {isExportWatermarkRequired(profile, roleTiers)
+                  ? 'Cryptographic User ID + IP watermark stamped on exports.'
+                  : 'Root Admin clean export privilege enabled.'}
+              </span>
+            </div>
+
+            {/* 4. Network Boundary & Terminal Lock */}
+            <div className="p-3 rounded-2xl bg-[#f8fafc] border border-slate-200 space-y-1">
+              <span className="text-[10px] font-bold uppercase text-slate-500 flex items-center justify-between">
+                <span>Network &amp; Auto-Lock</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-purple-100 text-purple-800">
+                  {activeTier?.sessionTimeoutMinutes || 15}M TIMEOUT
+                </span>
+              </span>
+              <div className="font-sans text-xs font-bold text-slate-900 pt-0.5 flex items-center gap-1">
+                <Network className="w-3.5 h-3.5 text-purple-700" />
+                <span className="truncate">
+                  {getUserNetworkScope(profile, roleTiers) === 'unrestricted'
+                    ? 'Unrestricted Network'
+                    : getUserNetworkScope(profile, roleTiers) === 'vpn_secure'
+                    ? 'Enterprise VPN/Intranet'
+                    : 'Factory Intranet Only'}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-500 block leading-tight">
+                {isTwoFactorRequired(profile, roleTiers) ? '2FA authentication mandatory.' : 'Standard terminal credentials authorized.'}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Comprehensive Operational Privileges Matrix */}
@@ -518,6 +696,220 @@ export const RbacTierSummaryTable: React.FC<RbacTierSummaryTableProps> = ({
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Enterprise Privacy, Security & DLP Governance Matrix */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#d9d2c2] shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#f1eee6]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#17343a] text-teal-300 flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-[#17343a] flex items-center gap-2">
+                <span>Enterprise Privacy, Security &amp; DLP Governance Matrix</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  ISO-27001 / GDPR Compliant
+                </span>
+              </h3>
+              <p className="text-xs text-[#527078]">
+                Cross-tier security clearance, forensic data loss prevention (DLP), network geofencing, and workstation lockout standards.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowSecurityMatrix(!showSecurityMatrix)}
+            className="text-xs font-bold text-[#176f78] hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+          >
+            <span>{showSecurityMatrix ? 'Collapse Security Matrix' : 'Expand Security Matrix'}</span>
+            {showSecurityMatrix ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+
+        {showSecurityMatrix && (
+          <div className="space-y-4 pt-1">
+            {/* Active User Security Posture Summary Card */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-[#17343a] to-[#12555c] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-teal-300 shrink-0">
+                  <Fingerprint className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-teal-200 font-bold uppercase tracking-wider">
+                      Current Profile Security Posture:
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-400 text-teal-950">
+                      {activeClearance.securityScoreRating.label} ({activeClearance.securityScore}%)
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-sm text-white mt-0.5">
+                    {profile?.name || 'Authorized Engineer'} • {activeClearance.clearanceLevel}
+                  </h4>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs flex-wrap">
+                <div className="px-2.5 py-1 rounded-xl bg-white/10 border border-white/15">
+                  <span className="text-[10px] text-teal-200 block">DLP Watermark</span>
+                  <span className="font-bold">{activeClearance.exportWatermark ? 'Active' : 'Unrestricted'}</span>
+                </div>
+                <div className="px-2.5 py-1 rounded-xl bg-white/10 border border-white/15">
+                  <span className="text-[10px] text-teal-200 block">Network Perimeter</span>
+                  <span className="font-bold">{activeClearance.networkScope === 'unrestricted' ? 'Unrestricted' : activeClearance.networkScope === 'vpn_secure' ? 'Secure VPN' : 'Intranet Only'}</span>
+                </div>
+                <div className="px-2.5 py-1 rounded-xl bg-white/10 border border-white/15">
+                  <span className="text-[10px] text-teal-200 block">Batch Export Cap</span>
+                  <span className="font-bold">{activeClearance.maxExportRowsLimit === 0 ? 'Unlimited' : `${activeClearance.maxExportRowsLimit} Rows`}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Matrix Comparison Table */}
+            <div className="overflow-x-auto rounded-2xl border border-[#d9d2c2]">
+              <table className="w-full text-left border-collapse min-w-[850px] text-xs">
+                <thead>
+                  <tr className="bg-[#f8f6f0] text-[#17343a] font-bold border-b border-[#d9d2c2]">
+                    <th className="py-3 px-3.5">Role Tier</th>
+                    <th className="py-3 px-3">Clearance Level</th>
+                    <th className="py-3 px-3">PII Contact Access</th>
+                    <th className="py-3 px-3">Financial Costing</th>
+                    <th className="py-3 px-3">DLP Forensic Watermark</th>
+                    <th className="py-3 px-3">Raw DB Export</th>
+                    <th className="py-3 px-3">Batch Limit</th>
+                    <th className="py-3 px-3">2FA Required</th>
+                    <th className="py-3 px-3">Network Boundary</th>
+                    <th className="py-3 px-3">Auto-Lock</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e7e1d5]">
+                  {roleTiers.map((tier) => {
+                    const isCurrent = tier.id === activeTierId;
+                    return (
+                      <tr
+                        key={tier.id}
+                        className={`transition-colors ${
+                          isCurrent
+                            ? 'bg-teal-50/70 font-semibold'
+                            : 'hover:bg-[#fbfaf6]'
+                        }`}
+                      >
+                        <td className="py-3 px-3.5">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{ backgroundColor: tier.color || '#1e3a8a' }}
+                            />
+                            <span className="font-bold text-[#17343a]">
+                              {tier.tierLevelLabel || `Tier ${tier.level}`}: {tier.shortCode}
+                            </span>
+                            {isCurrent && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-teal-600 text-white font-extrabold uppercase">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-3 font-medium text-[#17343a]">
+                          {tier.privacyClearanceLevel ? tier.privacyClearanceLevel.split('(')[0].trim() : (tier.level <= 1 ? 'Level 4' : tier.level === 2 ? 'Level 3' : tier.level === 3 ? 'Level 2' : 'Level 1')}
+                        </td>
+
+                        <td className="py-3 px-3">
+                          {tier.canViewPii !== false ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              Unmasked
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-slate-500 font-bold">
+                              <EyeOff className="w-3.5 h-3.5 text-slate-400" />
+                              Masked (***)
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-3">
+                          {tier.canViewSensitiveFinancials ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              Full Rates
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-amber-700 font-bold">
+                              <Lock className="w-3.5 h-3.5 text-amber-600" />
+                              Commercial Blur
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-3">
+                          {tier.exportWatermarkEnabled ? (
+                            <span className="inline-flex items-center gap-1 text-sky-800 font-bold">
+                              <FileSpreadsheet className="w-3.5 h-3.5 text-sky-600" />
+                              Forensic Stamp
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-slate-600">
+                              Clean (Admin)
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-3">
+                          {tier.canExportRawData ? (
+                            <span className="text-emerald-700 font-bold">Raw Allowed</span>
+                          ) : (
+                            <span className="text-slate-500">Aggregate Only</span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-3 font-mono font-bold text-slate-800">
+                          {tier.maxExportRowsLimit === 0 ? 'Unlimited' : `${tier.maxExportRowsLimit || (tier.level === 1 ? 5000 : tier.level === 2 ? 1000 : tier.level === 3 ? 500 : 100)} rows`}
+                        </td>
+
+                        <td className="py-3 px-3">
+                          {tier.twoFactorRequired ? (
+                            <span className="inline-flex items-center gap-1 text-purple-700 font-bold">
+                              <Fingerprint className="w-3.5 h-3.5 text-purple-600" />
+                              Mandatory
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">Optional</span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-3">
+                          <span className="inline-flex items-center gap-1 text-indigo-700 font-bold">
+                            <Network className="w-3.5 h-3.5 text-indigo-600" />
+                            {tier.allowedNetworkScope === 'unrestricted'
+                              ? 'Unrestricted'
+                              : tier.allowedNetworkScope === 'vpn_secure'
+                              ? 'Secure VPN'
+                              : 'Intranet Only'}
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-3 font-bold text-slate-700">
+                          <span className="inline-flex items-center gap-1">
+                            <Timer className="w-3.5 h-3.5 text-slate-400" />
+                            {tier.sessionTimeoutMinutes || 15} min
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

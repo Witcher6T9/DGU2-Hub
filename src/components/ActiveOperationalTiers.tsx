@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import {
   ShieldCheck,
+  Shield,
   Check,
   ArrowRight,
   Edit3,
@@ -33,7 +34,13 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
-  Plus
+  Plus,
+  Eye,
+  EyeOff,
+  FileSpreadsheet,
+  Fingerprint,
+  Timer,
+  KeyRound
 } from 'lucide-react';
 import { RoleTier, UserProfile } from '../types';
 import { ROLE_TIERS as DEFAULT_ROLE_TIERS } from '../mockData';
@@ -1461,6 +1468,54 @@ export const ActiveOperationalTiers: React.FC<ActiveOperationalTiersProps> = ({
                 </p>
               </div>
             </div>
+
+            {/* Privacy & Security Clearance Profile */}
+            {(() => {
+              const nodeTier = roleTiers.find(t => t.id === selectedNode.tierId) || roleTiers[0];
+              return (
+                <div className="p-3.5 rounded-2xl bg-[#f8fafc] border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-[#176f78]" />
+                      Privacy &amp; Security Clearance Matrix ({nodeTier.name})
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold text-[10px] bg-[#17343a] text-teal-300">
+                      {nodeTier.privacyClearanceLevel || (nodeTier.level <= 1 ? 'Level 4 Clearance' : nodeTier.level === 2 ? 'Level 3 Clearance' : nodeTier.level === 3 ? 'Level 2 Clearance' : 'Level 1 Clearance')}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div className="p-2 rounded-xl bg-white border border-slate-200">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">Operator PII</span>
+                      <span className={`font-bold text-xs ${nodeTier.canViewPii !== false ? 'text-emerald-700' : 'text-slate-500'}`}>
+                        {nodeTier.canViewPii !== false ? 'Unmasked Access' : 'Masked (***)'}
+                      </span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white border border-slate-200">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">Cost &amp; Financials</span>
+                      <span className={`font-bold text-xs ${nodeTier.canViewSensitiveFinancials ? 'text-amber-700' : 'text-slate-500'}`}>
+                        {nodeTier.canViewSensitiveFinancials ? 'Commercial Rates' : 'Cost Masked'}
+                      </span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white border border-slate-200">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">DLP Watermark</span>
+                      <span className="font-bold text-xs text-sky-800">
+                        {nodeTier.exportWatermarkEnabled ? 'Forensic Enforced' : 'Clean (Admin)'}
+                      </span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white border border-slate-200">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">Network Scope</span>
+                      <span className="font-bold text-xs text-indigo-700 truncate block">
+                        {nodeTier.allowedNetworkScope === 'unrestricted' ? 'Unrestricted' : nodeTier.allowedNetworkScope === 'vpn_secure' ? 'Secure VPN' : 'Intranet Only'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -1634,6 +1689,63 @@ export const ActiveOperationalTiers: React.FC<ActiveOperationalTiersProps> = ({
                           <span className="font-mono text-xs font-bold text-[#17343a]">
                             {tier.managesTiers}
                           </span>
+                        </div>
+                      </div>
+
+                      {/* Enterprise Privacy & Security Governance Details */}
+                      <div className="mt-3.5 pt-3 border-t border-[#f1eee6] space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span className="uppercase text-[10px] tracking-wider text-[#527078] flex items-center gap-1.5">
+                            <Shield className="w-3.5 h-3.5 text-[#176f78]" />
+                            Privacy &amp; Security Policy
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#17343a] text-teal-300">
+                            {tier.privacyClearanceLevel || (tier.level <= 1 ? 'Level 4 Clearance' : tier.level === 2 ? 'Level 3 Clearance' : tier.level === 3 ? 'Level 2 Clearance' : 'Level 1 Clearance')}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] pt-1">
+                          <div className="p-2 rounded-xl bg-[#f8f6f0] border border-[#e4ddce]">
+                            <span className="text-[10px] text-[#527078] block">PII Contact Access</span>
+                            <span className={`font-bold ${tier.canViewPii !== false ? 'text-emerald-700' : 'text-slate-500'}`}>
+                              {tier.canViewPii !== false ? 'Unmasked' : 'Masked (***)'}
+                            </span>
+                          </div>
+
+                          <div className="p-2 rounded-xl bg-[#f8f6f0] border border-[#e4ddce]">
+                            <span className="text-[10px] text-[#527078] block">Costing / Financials</span>
+                            <span className={`font-bold ${tier.canViewSensitiveFinancials ? 'text-amber-700' : 'text-slate-500'}`}>
+                              {tier.canViewSensitiveFinancials ? 'Unblurred' : 'Restricted'}
+                            </span>
+                          </div>
+
+                          <div className="p-2 rounded-xl bg-[#f8f6f0] border border-[#e4ddce]">
+                            <span className="text-[10px] text-[#527078] block">DLP Watermark</span>
+                            <span className="font-bold text-sky-800">
+                              {tier.exportWatermarkEnabled ? 'Enforced' : 'Clean (Admin)'}
+                            </span>
+                          </div>
+
+                          <div className="p-2 rounded-xl bg-[#f8f6f0] border border-[#e4ddce]">
+                            <span className="text-[10px] text-[#527078] block">Raw DB Export</span>
+                            <span className="font-bold text-slate-700">
+                              {tier.canExportRawData ? 'Allowed' : 'Aggregate Only'}
+                            </span>
+                          </div>
+
+                          <div className="p-2 rounded-xl bg-[#f8f6f0] border border-[#e4ddce]">
+                            <span className="text-[10px] text-[#527078] block">Network Scope</span>
+                            <span className="font-bold text-indigo-700 truncate block">
+                              {tier.allowedNetworkScope === 'unrestricted' ? 'Unrestricted' : tier.allowedNetworkScope === 'vpn_secure' ? 'Secure VPN' : 'Intranet Only'}
+                            </span>
+                          </div>
+
+                          <div className="p-2 rounded-xl bg-[#f8f6f0] border border-[#e4ddce]">
+                            <span className="text-[10px] text-[#527078] block">Auto-Lock / 2FA</span>
+                            <span className="font-bold text-slate-700">
+                              {tier.sessionTimeoutMinutes || 15}m {tier.twoFactorRequired ? '• 2FA Req.' : ''}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
